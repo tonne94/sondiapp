@@ -22,16 +22,13 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    //LIST OF ARRAY STRINGS WHICH WILL SERVE AS LIST ITEMS
-    ArrayList<String> listItems=new ArrayList<String>();
-
-    //DEFINING A STRING ADAPTER WHICH WILL HANDLE THE DATA OF THE LISTVIEW
-    ArrayAdapter<String> adapter;
-
-    private ListView listView;
+    private ListView list;
     private Button buttonSend;
     private String respo;
     OkHttpClient client = new OkHttpClient();
+
+    private ArrayAdapter<String> adapter;
+    private ArrayList<String> arrayList;
 
     String run(String url) throws IOException {
         Request request = new Request.Builder()
@@ -47,11 +44,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        listView=findViewById(R.id.list_view);
+        list=findViewById(R.id.list_view);
 
-        adapter=new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, listItems);
+        arrayList = new ArrayList<String>();
+        adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.layout_list, arrayList);
 
-        listView.setAdapter(adapter);
+        list.setAdapter(adapter);
 
         buttonSend = findViewById(R.id.button_send);
 
@@ -64,6 +62,18 @@ public class MainActivity extends AppCompatActivity {
                         .build();
                 new MyAsyncTask().execute(request);
 
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if(respo.length()>0){
+                    try {
+                        processJSON(respo);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
                             }
         });
     }
@@ -74,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         for(int i=0; i<jArray.length(); i++){
             JSONObject jObject = jArray.getJSONObject(i);
             String a = jObject.getString("Naziv");
+            arrayList.add(a);
+            adapter.notifyDataSetChanged();
             System.out.println(a);
         }
     }
@@ -88,13 +100,7 @@ public class MainActivity extends AppCompatActivity {
                 response = client.newCall(requests[0]).execute();
                 respo = response.body().string();
 
-                if(respo.length()>0){
-                    processJSON(respo);
-                }
-
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
                 e.printStackTrace();
             }
             return response;
